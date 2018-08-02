@@ -1,23 +1,33 @@
-pwcons<-read.table("../household_power_consumption.txt", header = TRUE, sep=";", 
-                   colClasses = c("character", "character", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"), na.strings = "?")
-
-pwcons07<-subset(pwcons, ((as.Date(Date, '%d/%m/%Y')>=as.Date('01/02/2007', '%d/%m/%Y')) & (as.Date(Date, '%d/%m/%Y')<=as.Date('02/02/2007', '%d/%m/%Y'))))
-
-strptime(paste(pwcons07$Date, pwcons07$Time),  "%d/%m/%Y %H:%M:%S")
-
-pwcons07$datetime<-as.list(strptime(paste(pwcons07$Date, pwcons07$Time),  "%d/%m/%Y %H:%M:%S"))
-
-png(filename="plot3.png", width=480, height=480, bg="white")
-
-par(mfrow=c(1,1))
-
-with(pwcons07, plot(datetime , Sub_metering_1  ,type = "l", xlab = "", ylab = "Energy sub metering" ))
-
-lines(pwcons07$datetime,pwcons07$Sub_metering_2, type = "l", lty=1, col="red")
-lines(pwcons07$datetime,pwcons07$Sub_metering_3, type = "l", lty=1, col="blue")
-legend("topright", "(x,y)", lty=1,  col=c("black", "red", "blue"),  legend=c("sub_metering_1", "sub_metering_2", "sub_metering_3"))
+library(dplyr)
+library(ggplot2)
+# Reading datasets.
+NEI <- readRDS("summarySCC_PM25.rds")
+#SCC <- readRDS("Source_Classification_Code.rds")
 
 
-#dev.copy(png, file="plot3.png")
+# filtering the dataset for Baltimore City, Maryland (fips=="24510") 
+NEIBaltimore<-NEI[NEI$fips=="24510",]
+# Finding total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008
+SumByTypeYear <- NEI[NEI$fips=="24510",] %>% group_by(type, year) %>% summarise(sumEmissions=sum(Emissions))
 
+#g <- ggplot(SumByTypeYear, aes(year, type, sumEmissions))
+## Add layers
+ggplot(SumByTypeYear, aes(x=year, y=sumEmissions, group=type, fill=year, color=type))  + 
+geom_line()+
+  labs(x="year")+
+  labs(y="Emission")+
+  labs(title="Emission across years per type")
+
+ggsave("plot3.png", plot = last_plot())
 dev.off()
+#plotting it 
+#png(file="plot2.png")
+#with(BaltimoreEmission, plot(year,Emissions))
+#title(main = "PM2.5 1999, 2002, 2005, 2008")
+#dev.off()
+
+#From the plot we can see that PM2.5 emission in Baltimore has differred across sources.
+# Emission in 'Non-Road' source has seen a decrease from 1999 to 2008.
+# Emission in 'Non-Point' source has seen a decrease from 1999 to 2008
+# Emission in 'Point' source has seen an increase from 1999 to 2008
+# Emission in 'On Road' source has seen a decrease from 1999 to 2008

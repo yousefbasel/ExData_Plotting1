@@ -1,13 +1,15 @@
-pwcons<-read.table("../household_power_consumption.txt", header = TRUE, sep=";", 
-                   colClasses = c("character", "character", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"), na.strings = "?")
+# Reading datasets.
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
 
-pwcons07<-subset(pwcons, ((as.Date(Date, '%d/%m/%Y')>=as.Date('01/02/2007', '%d/%m/%Y')) & (as.Date(Date, '%d/%m/%Y')<=as.Date('02/02/2007', '%d/%m/%Y'))))
+# Finding total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008
+EmissionAcrossYears<-aggregate(Emissions ~ year, sum, data=NEI)
 
-png(filename="plot1.png", width=480, height=480, bg="white")
 
-par(mfrow=c(1,1))
-hist(pwcons07$Global_active_power, xlab = "Global Active Power (killowatts)", ylab = "Frequency", main = "Global Active Power", col = "red")
-
-#dev.copy(png, file="plot1.png")
-
+#plotting it 
+png(file="plot1.png")
+with(EmissionAcrossYears, plot(year,Emissions))
+title(main = "PM2.5 1999, 2002, 2005, 2008")
 dev.off()
+
+#From the plot we can see that PM2.5 has decreased throughout the given years.

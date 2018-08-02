@@ -1,28 +1,24 @@
-pwcons<-read.table("../household_power_consumption.txt", header = TRUE, sep=";", 
-                   colClasses = c("character", "character", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"), na.strings = "?")
+library(dplyr)
+library(ggplot2)
+# Reading datasets.
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
 
-pwcons07<-subset(pwcons, ((as.Date(Date, '%d/%m/%Y')>=as.Date('01/02/2007', '%d/%m/%Y')) & (as.Date(Date, '%d/%m/%Y')<=as.Date('02/02/2007', '%d/%m/%Y'))))
+# filtering the dataset for coal combustion-related sources from 1999 to 2008 
+CoalComp<-NEI[NEI$SCC %in% SCC[grep("Coal", SCC$EI.Sector),"SCC"],]
 
-strptime(paste(pwcons07$Date, pwcons07$Time),  "%d/%m/%Y %H:%M:%S")
+# Finding total PM2.5 emission from coal combustion sources for each of the years 1999, 2002, 2005, and 2008
+SumByYear <- CoalComp %>% group_by(year) %>% summarise(sumEmissions=sum(Emissions))
 
-pwcons07$datetime<-as.list(strptime(paste(pwcons07$Date, pwcons07$Time),  "%d/%m/%Y %H:%M:%S"))
 
-png(filename="plot4.png", width=480, height=480, bg="white")
+ggplot(SumByYear, aes(x=year, y=sumEmissions, fill=year))  + 
+  geom_line()+
+  labs(x="year")+
+  labs(y="Emission")+
+  labs(title="Emission across years for coal combustion soures.")
 
-par(mfrow=c(2,2))
-
-with(pwcons07, plot(datetime , Global_active_power,type = "l", xlab = "", ylab = "Global Active Power (kilowatts)"))
-
-with(pwcons07, plot(datetime , Voltage ,type = "l", xlab = "datetime", ylab = "Voltage"))
-
-with(pwcons07, plot(datetime , Sub_metering_1  ,type = "l", xlab = "", ylab = "Energy sub metering" ))
-
-lines(pwcons07$datetime,pwcons07$Sub_metering_2, type = "l", lty=1, col="red")
-lines(pwcons07$datetime,pwcons07$Sub_metering_3, type = "l", lty=1, col="blue")
-legend("topright", lty=1, col=c("black", "red", "blue"), legend=c("sub_metering_1", "sub_metering_2", "sub_metering_3"))
-
-with(pwcons07, plot(datetime , Global_reactive_power ,type = "l", xlab = "datetime", ylab = "Global_reactive_power"))
-
-#dev.copy(png, file="ExData_Plotting1/plot4.png")
-
+ggsave("plot4.png", plot = last_plot())
 dev.off()
+
+#From the plot we can see that the  emissions from coal combustion-related sources 
+# has decreased from the year 1999 to 2008.

@@ -1,18 +1,17 @@
-pwcons<-read.table("../household_power_consumption.txt", header = TRUE, sep=";", 
-                   colClasses = c("character", "character", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric"), na.strings = "?")
+# Reading datasets.
+NEI <- readRDS("summarySCC_PM25.rds")
+SCC <- readRDS("Source_Classification_Code.rds")
 
-pwcons07<-subset(pwcons, ((as.Date(Date, '%d/%m/%Y')>=as.Date('01/02/2007', '%d/%m/%Y')) & (as.Date(Date, '%d/%m/%Y')<=as.Date('02/02/2007', '%d/%m/%Y'))))
+# filtering the dataset for Baltimore City, Maryland (fips=="24510") 
+NEIBaltimore<-NEI[NEI$fips=="24510",]
+# Finding total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008
+BaltimoreEmission<-aggregate(Emissions ~ year, sum, data=NEIBaltimore)
 
-strptime(paste(pwcons07$Date, pwcons07$Time),  "%d/%m/%Y %H:%M:%S")
-
-pwcons07$datetime<-as.list(strptime(paste(pwcons07$Date, pwcons07$Time),  "%d/%m/%Y %H:%M:%S"))
-
-png(filename="plot2.png", width=480, height=480, bg="white")
-
-par(mfrow=c(1,1))
-
-with(pwcons07, plot(datetime , Global_active_power,type = "l", xlab = "", ylab = "Global Active Power (kilowatts)"))
-
-#dev.copy(png, file="plot2.png")
-
+#plotting it 
+png(file="plot2.png")
+with(BaltimoreEmission, plot(year,Emissions))
+title(main = "PM2.5 1999, 2002, 2005, 2008")
 dev.off()
+
+#From the plot we can see that PM2.5 emission in Baltimore has fluctuated but overall it 
+#has decreased throughout the given years.
